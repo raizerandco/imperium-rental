@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Imperium Luxury — Rental Request</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,500&family=Sora:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --bg:#0b0d12; --panel:rgba(255,255,255,0.05); --panel-b:rgba(255,255,255,0.10);
+    --gold:#e8c36a; --gold-d:#b8902f; --ink:#efeadf; --muted:#9a9484; --good:#7fd4a3;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#000 0%,#000 120px,rgba(0,0,0,0) 360px),radial-gradient(120% 70% at 80% -5%,#1a1d27 0%,#0b0d12 55%,#08090d 100%);
+    background-repeat:no-repeat;
+    color:var(--ink);font-family:'Sora',system-ui,sans-serif;line-height:1.5;min-height:100vh}
+  .serif{font-family:'Playfair Display',Georgia,serif}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 18px 80px}
+  /* header */
+  header{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;margin-bottom:10px}
+  .logo{font-size:22px;font-weight:700;letter-spacing:5px}
+  .logo span{color:var(--gold)}
+  .sub{font-size:13px;color:var(--muted);letter-spacing:1px}
+  h1.serif{font-size:26px;font-weight:600;margin:22px 0 4px}
+  .lead{color:var(--muted);font-size:14px;margin:0 0 22px}
+  /* sections */
+  section{background:var(--panel);border:1px solid var(--panel-b);border-radius:20px;padding:22px;margin-bottom:18px;
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 16px 40px rgba(0,0,0,0.28)}
+  .step{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .step .n{width:26px;height:26px;border-radius:50%;background:linear-gradient(145deg,var(--gold),var(--gold-d));
+    color:#1a140a;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .step h2{font-size:16px;font-weight:600;margin:0}
+  /* car grid */
+  .cars{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+  .car{text-align:left;cursor:pointer;background:rgba(255,255,255,0.03);border:1px solid var(--panel-b);
+    border-radius:14px;padding:14px;color:var(--ink);font-family:inherit;transition:border-color .15s,background .15s}
+  .car:hover{border-color:rgba(232,195,106,0.5)}
+  .car.sel{border-color:var(--gold);background:linear-gradient(130deg,rgba(232,195,106,0.16),rgba(232,195,106,0.03))}
+  .car .mk{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+  .car .md{font-size:15px;font-weight:600;margin-top:2px}
+  .car .cl{font-size:12px;color:var(--muted);margin-top:1px}
+  .car .pr{font-size:15px;font-weight:700;color:var(--gold);margin-top:8px}
+  .car .pr small{color:var(--muted);font-weight:400;font-size:11px}
+  /* fields */
+  .row{display:flex;flex-wrap:wrap;gap:14px}
+  .field{display:flex;flex-direction:column;gap:6px;flex:1 1 200px;min-width:0}
+  .field.full{flex-basis:100%}
+  label{font-size:12px;color:var(--muted)}
+  label .req{color:var(--gold)}
+  input,select{font-family:inherit;font-size:14px;color:var(--ink);background:rgba(255,255,255,0.05);
+    border:1px solid var(--panel-b);border-radius:11px;padding:11px 13px;width:100%}
+  input:focus,select:focus{outline:none;border-color:var(--gold)}
+  input::placeholder{color:#6f6a5e}
+  input[type="date"]{color-scheme:dark}
+  /* price box */
+  .price{margin-top:16px;border-radius:16px;border:1px solid rgba(232,195,106,0.25);
+    background:rgba(232,195,106,0.07);padding:16px}
+  .price .line{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin:5px 0}
+  .price .line span.v{color:var(--ink)}
+  .price .total{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;
+    padding-top:10px;border-top:1px solid rgba(255,255,255,0.1)}
+  .price .total .l{font-size:14px;font-weight:600}
+  .price .total .a{font-size:24px;font-weight:700;color:var(--gold)}
+  .price .note{font-size:11px;color:var(--muted);margin-top:8px}
+  /* uploads */
+  .up{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+  .drop{position:relative;border:1px dashed rgba(255,255,255,0.22);border-radius:14px;padding:16px;text-align:center;
+    background:rgba(255,255,255,0.02);transition:border-color .15s}
+  .drop:hover{border-color:var(--gold)}
+  .drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .drop .t{font-size:13px;font-weight:600}
+  .drop .h{font-size:11px;color:var(--muted);margin-top:3px}
+  .drop .fn{font-size:11px;color:var(--good);margin-top:7px;word-break:break-all;display:none}
+  .drop.has .fn{display:block}
+  .drop.has{border-color:var(--good);border-style:solid}
+  .ctype{display:flex;gap:10px;flex-wrap:wrap}
+  .ct{flex:1 1 160px;padding:12px;border-radius:12px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;
+    background:rgba(255,255,255,0.05);border:1px solid var(--panel-b);color:var(--ink)}
+  .ct:hover{border-color:rgba(232,195,106,0.5)}
+  .ct.sel{border-color:var(--gold);background:linear-gradient(130deg,rgba(232,195,106,0.16),rgba(232,195,106,0.03));color:var(--ink)}
+  /* submit */
+  .submit{width:100%;padding:16px;border:none;border-radius:16px;font-family:inherit;font-weight:700;font-size:16px;
+    color:#1a140a;background:linear-gradient(145deg,var(--gold),var(--gold-d));cursor:pointer;
+    box-shadow:0 12px 30px rgba(232,195,106,0.25)}
+  .submit:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+  .foot{text-align:center;font-size:11px;color:var(--muted);margin-top:16px}
+  /* confirmation */
+  .done{display:none;text-align:center;padding:30px 10px}
+  .done.show{display:block}
+  .done .check{width:64px;height:64px;border-radius:50%;background:rgba(127,212,163,0.15);color:var(--good);
+    font-size:32px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+  .proto{background:rgba(232,195,106,0.1);border:1px solid rgba(232,195,106,0.3);border-radius:12px;
+    padding:10px 14px;font-size:12px;color:var(--gold);text-align:center;margin-bottom:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <img src="logo.png" alt="Imperium Luxury Motors" style="width:min(300px,78%);height:auto;display:block;margin:4px auto 0">
+    <div class="sub" style="margin-top:8px">MIAMI</div>
+  </header>
+
+  <div id="form">
+    <h1 class="serif">Rental Request</h1>
+    <p class="lead">Select your vehicle, choose your dates, and share your details to reserve. Our team will review and confirm.</p>
+
+    <!-- 1. vehicle -->
+    <section>
+      <div class="step"><div class="n">1</div><h2>Choose your vehicle</h2></div>
+      <div class="cars" id="cars"></div>
+    </section>
+
+    <!-- 2. dates / price -->
+    <section>
+      <div class="step"><div class="n">2</div><h2>Rental period</h2></div>
+      <div class="row">
+        <div class="field"><label>Pickup date <span class="req">*</span></label><input type="date" id="pickup"></div>
+        <div class="field"><label>Number of days <span class="req">*</span></label><input type="number" id="days" min="1" value="1"></div>
+        <div class="field"><label>Return date</label><input type="date" id="returnd" readonly></div>
+      </div>
+      <div class="price" id="price">
+        <div class="line">Daily rate × days <span class="v" id="pSub">—</span></div>
+        <div class="line">Taxes &amp; fees (10%) <span class="v" id="pTax">—</span></div>
+        <div class="line">SunPass ($10/day) <span class="v" id="pSun">—</span></div>
+        <div class="total"><span class="l">Estimated total</span><span class="a" id="pTotal">—</span></div>
+        <div class="note" id="pDep">Refundable security deposit held separately.</div>
+        <div class="note">Final price may include a discount applied by Imperium after review.</div>
+      </div>
+    </section>
+
+    <!-- 3. info -->
+    <section>
+      <div class="step"><div class="n">3</div><h2>Your information</h2></div>
+      <div class="row">
+        <div class="field"><label>Full name <span class="req">*</span></label><input id="f_name" placeholder="As on your license"></div>
+        <div class="field"><label>Nationality</label><input id="f_nat" placeholder="e.g. Brazilian"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Email <span class="req">*</span></label><input id="f_email" type="email" placeholder="you@email.com"></div>
+        <div class="field"><label>Phone <span class="req">*</span></label><input id="f_phone" placeholder="+1 ..."></div>
+      </div>
+      <div class="row">
+        <div class="field full"><label>Address</label><input id="f_addr" placeholder="Street and number"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>City</label><input id="f_city"></div>
+        <div class="field"><label>State</label><input id="f_state"></div>
+        <div class="field"><label>ZIP</label><input id="f_zip"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Date of birth</label><input id="f_dob" type="date"></div>
+        <div class="field"><label>Driver license #</label><input id="f_lic"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>License state</label><input id="f_licstate"></div>
+        <div class="field"><label>License expiration</label><input id="f_licexp" type="date"></div>
+      </div>
+    </section>
+
+    <!-- 4. documents -->
+    <section>
+      <div class="step"><div class="n">4</div><h2>Documents</h2></div>
+      <div class="field full" style="margin-bottom:14px">
+        <label>Client type <span class="req">*</span></label>
+        <div class="ctype">
+          <button type="button" class="ct" id="ctUS">US client</button>
+          <button type="button" class="ct" id="ctINT">International client</button>
+        </div>
+        <div class="h" style="font-size:11px;color:var(--muted);margin-top:8px">US clients upload insurance. International clients upload passport. Driver license is always required.</div>
+      </div>
+      <div class="up">
+        <label class="drop" id="d1"><input type="file" accept="image/*" data-k="Driver license (front)"><div class="t">License — front</div><div class="h">Photo</div><div class="fn"></div></label>
+        <label class="drop" id="d2"><input type="file" accept="image/*" data-k="Driver license (back)"><div class="t">License — back</div><div class="h">Photo</div><div class="fn"></div></label>
+        <label class="drop" id="d3" style="display:none"><input type="file" accept="image/*" data-k="Passport"><div class="t">Passport</div><div class="h">Full page photo</div><div class="fn"></div></label>
+        <label class="drop" id="d4" style="display:none"><input type="file" accept="image/*,application/pdf" data-k="Insurance"><div class="t">Insurance</div><div class="h">Photo or PDF</div><div class="fn"></div></label>
+      </div>
+    </section>
+
+    <button class="submit" id="submit">Submit request</button>
+    <div class="foot">Your documents are shared securely with Imperium Luxury for this reservation only.</div>
+  </div>
+
+  <!-- confirmation -->
+  <div class="done" id="done">
+    <div class="check">✓</div>
+    <h1 class="serif" style="margin-top:0">Request received</h1>
+    <p class="lead" id="doneMsg"></p>
+    <section style="text-align:left" id="summary"></section>
+    <div class="foot">Imperium Luxury has received your request and will be in touch shortly.</div>
+  </div>
+
+</div>
+
+<script>
+  var FLEET=[
+    {m:'Chevrolet',mo:'Corvette Stingray',c:'Rapid Blue',p:445,d:1500},
+    {m:'Chevrolet',mo:'Corvette Stingray',c:'Red',p:445,d:1500},
+    {m:'Mercedes-Benz',mo:'G63 AMG',c:'Arabian Grey',p:795,d:2500},
+    {m:'Mercedes-Benz',mo:'G63 AMG',c:'Matte Black',p:795,d:2500},
+    {m:'Mercedes-Benz',mo:'SL55 AMG',c:'White',p:695,d:2500},
+    {m:'Mercedes-Benz',mo:'Maybach 580',c:'White Two-Tone',p:695,d:2500},
+    {m:'Porsche',mo:'GT3',c:'Yellow',p:1295,d:2500},
+    {m:'Porsche',mo:'911 Carrera S',c:'Dark Blue',p:599,d:2000},
+    {m:'Rolls-Royce',mo:'Spectre',c:'Black',p:1695,d:4000},
+    {m:'Rolls-Royce',mo:'Cullinan',c:'Space Grey',p:1495,d:4000},
+    {m:'Rolls-Royce',mo:'Cullinan Black Badge',c:'Black',p:1995,d:5000},
+    {m:'Lamborghini',mo:'Urus EV',c:'Baby Blue',p:1395,d:3000},
+    {m:'Lamborghini',mo:'Urus',c:'Lime Green',p:1095,d:3000},
+    {m:'Lamborghini',mo:'Urus',c:'Pearl Blue',p:1095,d:3000},
+    {m:'Lamborghini',mo:'Urus Performante',c:'Yellow',p:1295,d:3000},
+    {m:'Lamborghini',mo:'Huracan',c:'Lime Green',p:1295,d:3000},
+    {m:'Ferrari',mo:'296 GTS',c:'Assetto Fiorano',p:2195,d:5000},
+    {m:'Ferrari',mo:'SF90 Stradale',c:'Rosso Corsa',p:1995,d:5000},
+    {m:'Cadillac',mo:'Escalade',c:'Black',p:599,d:2000},
+    {m:'Land Rover',mo:'Defender',c:'White',p:450,d:2000},
+    {m:'Land Rover',mo:'Defender Trophy',c:'Yellow',p:450,d:2000},
+    {m:'Aston Martin',mo:'DBX 707',c:'Pearl Blue',p:795,d:2500},
+    {m:'McLaren',mo:'720S',c:'Orange',p:1595,d:5000}
+  ];
+  var sel=-1;
+  var fmt=function(n){return '$'+n.toLocaleString('en-US');};
+
+  var carsEl=document.getElementById('cars');
+  FLEET.forEach(function(car,i){
+    var b=document.createElement('button');
+    b.type='button';b.className='car';b.setAttribute('aria-pressed','false');
+    b.innerHTML='<div class="mk">'+car.m+'</div><div class="md">'+car.mo+'</div><div class="cl">'+car.c+'</div>'+
+                '<div class="pr">'+fmt(car.p)+' <small>/day</small></div>';
+    b.onclick=function(){
+      sel=i;
+      Array.prototype.forEach.call(carsEl.children,function(c){c.classList.remove('sel');c.setAttribute('aria-pressed','false');});
+      b.classList.add('sel');b.setAttribute('aria-pressed','true');
+      calc();
+    };
+    carsEl.appendChild(b);
+  });
+
+  var daysEl=document.getElementById('days'), pickupEl=document.getElementById('pickup'), returnEl=document.getElementById('returnd');
+  function calc(){
+    var days=parseInt(daysEl.value,10); if(!days||days<1){days=0;}
+    if(pickupEl.value && days>0){
+      var d=new Date(pickupEl.value+'T00:00:00'); d.setDate(d.getDate()+days);
+      returnEl.value=d.toISOString().slice(0,10);
+    } else { returnEl.value=''; }
+    if(sel<0||days<1){
+      ['pSub','pTax','pSun','pTotal'].forEach(function(id){document.getElementById(id).textContent='—';});
+      document.getElementById('pDep').textContent='Refundable security deposit held separately.';
+      return;
+    }
+    var car=FLEET[sel];
+    var sub=car.p*days, tax=sub*0.10, sun=10*days, total=sub+tax+sun;
+    document.getElementById('pSub').textContent=fmt(car.p)+' × '+days+' = '+fmt(sub);
+    document.getElementById('pTax').textContent=fmt(Math.round(tax));
+    document.getElementById('pSun').textContent=fmt(sun);
+    document.getElementById('pTotal').textContent=fmt(Math.round(total));
+    document.getElementById('pDep').textContent='Refundable security deposit: '+fmt(car.d)+' (held separately).';
+  }
+  daysEl.oninput=calc; pickupEl.onchange=calc;
+
+  Array.prototype.forEach.call(document.querySelectorAll('.drop input'),function(inp){
+    inp.onchange=function(){
+      var box=inp.closest('.drop'); var fn=box.querySelector('.fn');
+      if(inp.files&&inp.files[0]){box.classList.add('has');fn.textContent='✓ '+inp.files[0].name;}
+      else{box.classList.remove('has');fn.textContent='';}
+    };
+  });
+
+  var clientType='';
+  var ctUS=document.getElementById('ctUS'), ctINT=document.getElementById('ctINT');
+  var d3=document.getElementById('d3'), d4=document.getElementById('d4');
+  function clearDoc(box){var inp=box.querySelector('input');inp.value='';box.classList.remove('has');box.querySelector('.fn').textContent='';}
+  ctUS.onclick=function(){clientType='US';ctUS.classList.add('sel');ctINT.classList.remove('sel');
+    d4.style.display='';d3.style.display='none';clearDoc(d3);};
+  ctINT.onclick=function(){clientType='International';ctINT.classList.add('sel');ctUS.classList.remove('sel');
+    d3.style.display='';d4.style.display='none';clearDoc(d4);};
+
+  function showDone(name,car,days,total,docs,clientType){
+    document.getElementById('form').style.display='none';
+    document.getElementById('done').classList.add('show');
+    document.getElementById('doneMsg').textContent='Thank you, '+name+'. Imperium Luxury will review your request and confirm shortly.';
+    document.getElementById('summary').innerHTML=
+      '<div class="step"><div class="n">i</div><h2>Summary</h2></div>'+
+      '<p style="margin:0 0 6px"><strong>'+car.m+' '+car.mo+'</strong> · '+car.c+'</p>'+
+      '<p style="margin:0 0 6px;color:var(--muted);font-size:13px">'+(pickupEl.value||'—')+' → '+(returnEl.value||'—')+' · '+days+' day(s)</p>'+
+      '<p style="margin:0 0 12px;font-size:15px">Estimated total: <strong style="color:var(--gold)">'+fmt(Math.round(total))+'</strong> · Deposit '+fmt(car.d)+'</p>'+
+      '<p style="margin:0 0 4px;color:var(--muted);font-size:12px">'+name+' · '+clientType+' client</p>'+
+      '<p style="margin:8px 0 2px;color:var(--muted);font-size:12px">Documents:</p>'+
+      '<p style="margin:0;color:var(--muted);font-size:12px">'+docs.join('<br>')+'</p>';
+    window.scrollTo(0,0);
+  }
+
+  document.getElementById('submit').onclick=function(){
+    if(sel<0){alert('Please choose a vehicle.');return;}
+    var name=document.getElementById('f_name').value.trim();
+    var email=document.getElementById('f_email').value.trim();
+    var phone=document.getElementById('f_phone').value.trim();
+    var days=parseInt(daysEl.value,10);
+    if(!name||!email||!phone){alert('Please fill your name, email and phone.');return;}
+    if(!days||days<1){alert('Please enter the number of days.');return;}
+    if(!clientType){alert('Please select your client type (US or International).');return;}
+    var car=FLEET[sel];
+    var sub=car.p*days, tax=sub*0.10, sun=10*days, total=sub+tax+sun;
+    var docs=[];
+    Array.prototype.forEach.call(document.querySelectorAll('.drop'),function(box){
+      if(box.style.display==='none')return;
+      var inp=box.querySelector('input');
+      docs.push(inp.getAttribute('data-k')+': '+(inp.files&&inp.files[0]?inp.files[0].name:'— not provided'));
+    });
+
+    var btn=this; btn.disabled=true; btn.textContent='Sending...';
+    var fd=new FormData();
+    fd.append('client_type',clientType);
+    fd.append('car_make',car.m); fd.append('car_model',car.mo); fd.append('car_color',car.c);
+    fd.append('daily_rate',car.p); fd.append('days',days);
+    fd.append('pickup_date',pickupEl.value||''); fd.append('return_date',returnEl.value||'');
+    fd.append('subtotal',sub); fd.append('taxes_fees',Math.round(tax)); fd.append('sunpass',sun);
+    fd.append('total',Math.round(total)); fd.append('deposit',car.d);
+    fd.append('full_name',name); fd.append('nationality',document.getElementById('f_nat').value.trim());
+    fd.append('email',email); fd.append('phone',phone);
+    fd.append('address',document.getElementById('f_addr').value.trim());
+    fd.append('city',document.getElementById('f_city').value.trim());
+    fd.append('state',document.getElementById('f_state').value.trim());
+    fd.append('zip',document.getElementById('f_zip').value.trim());
+    fd.append('dob',document.getElementById('f_dob').value||'');
+    fd.append('license_no',document.getElementById('f_lic').value.trim());
+    fd.append('license_state',document.getElementById('f_licstate').value.trim());
+    fd.append('license_exp',document.getElementById('f_licexp').value||'');
+    var fmap={'Driver license (front)':'doc_license_front','Driver license (back)':'doc_license_back','Passport':'doc_passport','Insurance':'doc_insurance'};
+    Array.prototype.forEach.call(document.querySelectorAll('.drop'),function(box){
+      if(box.style.display==='none')return;
+      var inp=box.querySelector('input');
+      var key=fmap[inp.getAttribute('data-k')];
+      if(key&&inp.files&&inp.files[0]) fd.append(key,inp.files[0]);
+    });
+
+    fetch('https://mactclkjxhczmysjsakf.supabase.co/functions/v1/rental-request',{
+      method:'POST',
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hY3RjbGtqeGhjem15c2pzYWtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3NDE4NzIsImV4cCI6MjEwMDMxNzg3Mn0.eldabq6dEf1WsCpAJ4qFgsApaeCl8N51deHesYfhpvw'},
+      body:fd
+    }).then(function(r){return r.json();}).then(function(res){
+      if(!res||!res.ok) throw new Error((res&&res.error)||'Request failed');
+      showDone(name,car,days,total,docs,clientType);
+    }).catch(function(err){
+      btn.disabled=false; btn.textContent='Submit request';
+      alert('Something went wrong sending your request. Please try again.');
+    });
+  };
+</script>
+</body>
+</html>

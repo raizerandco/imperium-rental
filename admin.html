@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Imperium — Rental Requests Admin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,500&family=Sora:wght@400;500;600;700&display=swap">
+<style>
+  :root{--bg:#0b0d12;--panel:rgba(255,255,255,0.05);--panel-b:rgba(255,255,255,0.10);
+    --gold:#e8c36a;--gold-d:#b8902f;--ink:#efeadf;--muted:#9a9484;
+    --good:#7fd4a3;--blue:#6aa8ff;--grey:#8f8878;}
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(120% 60% at 80% -5%,#1a1d27 0%,#0b0d12 55%,#08090d 100%);
+    color:var(--ink);font-family:'Sora',system-ui,sans-serif;min-height:100vh;line-height:1.5}
+  .serif{font-family:'Playfair Display',Georgia,serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 18px 80px}
+  button{font-family:inherit;cursor:pointer}
+  input,select{font-family:inherit}
+  /* login */
+  #login{max-width:360px;margin:12vh auto 0;text-align:center}
+  #login .logo{font-size:22px;font-weight:700;letter-spacing:5px}
+  #login .logo b{color:var(--gold);font-weight:700}
+  #login h1{font-size:18px;font-weight:600;margin:26px 0 4px}
+  #login p{color:var(--muted);font-size:13px;margin:0 0 20px}
+  #login input{width:100%;padding:13px 14px;border-radius:12px;background:rgba(255,255,255,0.05);
+    border:1px solid var(--panel-b);color:var(--ink);font-size:15px;text-align:center}
+  #login button{width:100%;margin-top:12px;padding:13px;border:none;border-radius:12px;font-weight:700;
+    color:#1a140a;background:linear-gradient(145deg,var(--gold),var(--gold-d));font-size:15px}
+  #login .err{color:#f0a37a;font-size:12px;margin-top:10px;min-height:16px}
+  /* app */
+  #app{display:none}
+  .top{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .top .logo{font-size:19px;font-weight:700;letter-spacing:4px}
+  .top .logo b{color:var(--gold)}
+  .top .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .tools select,.tools button{padding:10px 14px;border-radius:11px;background:rgba(255,255,255,0.05);
+    border:1px solid var(--panel-b);color:var(--ink);font-size:13px}
+  .tools button.refresh{background:linear-gradient(145deg,var(--gold),var(--gold-d));color:#1a140a;font-weight:600;border:none}
+  .count{font-size:13px;color:var(--muted);margin-bottom:12px}
+  /* card */
+  .card{background:var(--panel);border:1px solid var(--panel-b);border-radius:18px;margin-bottom:14px;overflow:hidden;
+    box-shadow:0 14px 34px rgba(0,0,0,0.25)}
+  .head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:16px 18px;cursor:pointer}
+  .head:hover{background:rgba(255,255,255,0.02)}
+  .head .nm{font-size:15px;font-weight:600;flex:1 1 180px;min-width:0}
+  .head .nm .car{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:2px}
+  .head .amt{font-size:15px;font-weight:700;color:var(--gold)}
+  .head .when{font-size:11px;color:var(--muted);width:100%;order:5}
+  .badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .b-new{background:rgba(232,195,106,0.16);color:var(--gold)}
+  .b-in_review{background:rgba(106,168,255,0.16);color:var(--blue)}
+  .b-contract_sent{background:rgba(127,212,163,0.16);color:var(--good)}
+  .b-closed{background:rgba(255,255,255,0.08);color:var(--grey)}
+  .body{display:none;padding:0 18px 20px;border-top:1px solid var(--panel-b)}
+  .card.open .body{display:block}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px 18px;margin-top:16px}
+  .kv .k{font-size:11px;color:var(--muted)}
+  .kv .v{font-size:14px}
+  .docs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:18px}
+  .doc{border:1px solid var(--panel-b);border-radius:12px;overflow:hidden;background:rgba(255,255,255,0.03)}
+  .doc .lbl{font-size:11px;color:var(--muted);padding:8px 10px}
+  .doc img{width:100%;height:120px;object-fit:cover;display:block;background:#000}
+  .doc a.pdf{display:flex;height:120px;align-items:center;justify-content:center;color:var(--gold);font-size:13px;text-decoration:none}
+  .doc a.dl{display:block;text-align:center;font-size:11px;color:var(--gold);padding:8px;text-decoration:none;border-top:1px solid var(--panel-b)}
+  .statusrow{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+  .statusrow label{font-size:12px;color:var(--muted)}
+  .statusrow select{padding:9px 12px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid var(--panel-b);color:var(--ink);font-size:13px}
+  .empty{text-align:center;color:var(--muted);padding:50px 0}
+  .sechead{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:18px}
+  #lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:50;align-items:center;justify-content:center;padding:20px}
+  #lb.show{display:flex}
+  #lb img{max-width:95%;max-height:92%;border-radius:8px}
+  #lb .x{position:absolute;top:14px;right:22px;color:#fff;font-size:34px;cursor:pointer;line-height:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="login">
+    <div class="logo">IMPERIUM <b>LUXURY</b></div>
+    <h1 class="serif">Rental Requests</h1>
+    <p>Private admin area</p>
+    <input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+    <button id="enter">Enter</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+
+  <div id="app">
+    <div class="top">
+      <div>
+        <div class="logo">IMPERIUM <b>LUXURY</b></div>
+        <div class="sub">Rental Requests</div>
+      </div>
+      <div class="tools">
+        <select id="filter">
+          <option value="all">All statuses</option>
+          <option value="new">New</option>
+          <option value="in_review">In review</option>
+          <option value="contract_sent">Contract sent</option>
+          <option value="closed">Closed</option>
+        </select>
+        <button class="refresh" id="refresh">Refresh</button>
+        <button id="logout">Log out</button>
+      </div>
+    </div>
+    <div class="count" id="count"></div>
+    <div id="list"></div>
+  </div>
+
+</div>
+
+<script>
+  var API='https://mactclkjxhczmysjsakf.supabase.co/functions/v1/admin-api';
+  var ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hY3RjbGtqeGhjem15c2pzYWtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3NDE4NzIsImV4cCI6MjEwMDMxNzg3Mn0.eldabq6dEf1WsCpAJ4qFgsApaeCl8N51deHesYfhpvw';
+  var pw='';
+  var rows=[];
+  var STATUSES=[['new','New'],['in_review','In review'],['contract_sent','Contract sent'],['closed','Closed']];
+
+  function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+
+  function api(payload){
+    payload.password=pw;
+    return fetch(API,{method:'POST',headers:{'apikey':ANON,'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){return r.json();});
+  }
+
+  function fmt(n){ if(n===null||n===undefined||n==='')return '—'; return '$'+Number(n).toLocaleString('en-US'); }
+  function esc(s){ if(s===null||s===undefined)return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function val(s){ return (s===null||s===undefined||s==='')?'—':esc(s); }
+  function statusLabel(s){ for(var i=0;i<STATUSES.length;i++){if(STATUSES[i][0]===s)return STATUSES[i][1];} return s||'new'; }
+
+  function doLogin(){
+    var v=document.getElementById('pw').value;
+    if(!v){return;}
+    pw=v;
+    document.getElementById('loginErr').textContent='Checking...';
+    api({action:'list'}).then(function(res){
+      if(res&&res.ok){
+        lsSet('imp_admin_pw',pw);
+        document.getElementById('login').style.display='none';
+        document.getElementById('app').style.display='block';
+        rows=res.rows||[]; render();
+      } else {
+        pw=''; document.getElementById('loginErr').textContent='Wrong password.';
+      }
+    }).catch(function(){ pw=''; document.getElementById('loginErr').textContent='Connection error.'; });
+  }
+
+  function load(){
+    document.getElementById('count').textContent='Loading...';
+    api({action:'list'}).then(function(res){
+      if(res&&res.ok){ rows=res.rows||[]; render(); }
+      else { document.getElementById('count').textContent='Error loading.'; }
+    }).catch(function(){ document.getElementById('count').textContent='Connection error.'; });
+  }
+
+  function docBlock(label,url,path){
+    if(!url) return '';
+    var isPdf=(path||'').toLowerCase().indexOf('.pdf')>-1;
+    var inner = isPdf
+      ? '<a class="pdf" href="'+url+'" target="_blank" rel="noopener">Open PDF</a>'
+      : '<img src="'+url+'" alt="'+esc(label)+'" style="cursor:zoom-in" onclick="lightbox(\''+url+'\')">';
+    return '<div class="doc"><div class="lbl">'+esc(label)+'</div>'+inner+'</div>';
+  }
+
+  function render(){
+    var filter=document.getElementById('filter').value;
+    var list=document.getElementById('list');
+    var shown=rows.filter(function(r){return filter==='all'||((r.status||'new')===filter);});
+    document.getElementById('count').textContent=shown.length+' request'+(shown.length===1?'':'s');
+    if(!shown.length){ list.innerHTML='<div class="empty">No requests yet.</div>'; return; }
+    list.innerHTML=shown.map(function(r){
+      var st=r.status||'new';
+      var when=r.created_at? new Date(r.created_at).toLocaleString() : '';
+      var docs=[
+        docBlock('License front',r.doc_license_front_url,r.doc_license_front),
+        docBlock('License back',r.doc_license_back_url,r.doc_license_back),
+        docBlock('Passport',r.doc_passport_url,r.doc_passport),
+        docBlock('Insurance',r.doc_insurance_url,r.doc_insurance)
+      ].join('');
+      var opts=STATUSES.map(function(s){return '<option value="'+s[0]+'"'+(s[0]===st?' selected':'')+'>'+s[1]+'</option>';}).join('');
+      return '<div class="card" data-id="'+esc(r.id)+'">'+
+        '<div class="head" onclick="toggle(this)">'+
+          '<div class="nm">'+val(r.full_name)+'<span class="car">'+val(r.car_make)+' '+val(r.car_model)+' · '+val(r.car_color)+'</span></div>'+
+          '<div class="amt">'+fmt(r.total)+'</div>'+
+          '<span class="badge b-'+st+'">'+statusLabel(st)+'</span>'+
+          '<div class="when">'+esc(when)+'</div>'+
+        '</div>'+
+        '<div class="body">'+
+          '<div class="grid">'+
+            kv('Client type',r.client_type==='US'?'US client':(r.client_type==='International'?'International':val(r.client_type)))+
+            kv('Pickup',val(r.pickup_date))+kv('Return',val(r.return_date))+kv('Days',val(r.days))+
+            kv('Daily rate',fmt(r.daily_rate))+kv('Subtotal',fmt(r.subtotal))+kv('Taxes & fees',fmt(r.taxes_fees))+
+            kv('SunPass',fmt(r.sunpass))+kv('Total',fmt(r.total))+kv('Deposit',fmt(r.deposit))+
+            kv('Email',val(r.email))+kv('Phone',val(r.phone))+kv('Nationality',val(r.nationality))+
+            kv('Date of birth',val(r.dob))+
+            kv('Address',val(r.address))+kv('City',val(r.city))+kv('State',val(r.state))+kv('ZIP',val(r.zip))+
+            kv('License #',val(r.license_no))+kv('License state',val(r.license_state))+kv('License exp.',val(r.license_exp))+
+          '</div>'+
+          '<div class="sechead">Documents</div>'+
+          (docs.replace(/\s+/g,'').length? '<div class="docs">'+docs+'</div>' : '<p style="color:var(--muted);font-size:13px;margin:8px 0 0">No documents uploaded.</p>')+
+          '<div class="statusrow"><label>Status</label>'+
+            '<select onchange="changeStatus(\''+esc(r.id)+'\',this.value,this)">'+opts+'</select>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  function kv(k,v){ return '<div class="kv"><div class="k">'+esc(k)+'</div><div class="v">'+v+'</div></div>'; }
+
+  window.toggle=function(el){ el.parentNode.classList.toggle('open'); };
+  window.changeStatus=function(id,status,sel){
+    sel.disabled=true;
+    api({action:'update_status',id:id,status:status}).then(function(res){
+      sel.disabled=false;
+      if(res&&res.ok){
+        for(var i=0;i<rows.length;i++){ if(rows[i].id===id){ rows[i].status=status; break; } }
+        var badge=sel.closest('.card').querySelector('.badge');
+        badge.className='badge b-'+status; badge.textContent=statusLabel(status);
+      } else { alert('Could not update status.'); }
+    }).catch(function(){ sel.disabled=false; alert('Connection error.'); });
+  };
+
+  var lb=document.createElement('div'); lb.id='lb';
+  lb.innerHTML='<span class="x">&times;</span><img id="lbimg" alt="document">';
+  lb.onclick=function(){lb.classList.remove('show');};
+  document.body.appendChild(lb);
+  window.lightbox=function(u){document.getElementById('lbimg').src=u;lb.classList.add('show');};
+
+  document.getElementById('enter').onclick=doLogin;
+  document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+  document.getElementById('refresh').onclick=load;
+  document.getElementById('filter').onchange=render;
+  document.getElementById('logout').onclick=function(){ try{localStorage.removeItem('imp_admin_pw');}catch(e){} location.reload(); };
+
+  // auto-login if saved
+  var saved=lsGet('imp_admin_pw');
+  if(saved){ pw=saved; document.getElementById('pw').value=saved; doLogin(); }
+</script>
+</body>
+</html>
