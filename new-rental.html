@@ -10,19 +10,15 @@
 body{margin:0;background:var(--bg);color:var(--txt);font-family:Arial,Helvetica,sans-serif;font-size:14px}
 .serif{font-family:Georgia,'Times New Roman',serif}
 a{color:var(--gold2)}
-/* login */
-#login{max-width:360px;margin:12vh auto 0;text-align:center;padding:0 16px}
-#login .logo{font-size:22px;font-weight:700;letter-spacing:5px}
-#login .logo b{color:var(--gold)}
-#login h1{font-size:18px;font-weight:600;margin:26px 0 4px}
-#login p{color:var(--muted);font-size:13px;margin:0 0 20px}
+#gate{display:none;max-width:420px;margin:16vh auto 0;text-align:center;padding:0 16px;color:var(--muted)}
+#gate .logo{font-size:22px;font-weight:700;letter-spacing:5px;color:var(--txt)}
+#gate .logo b{color:var(--gold)}
+#gate p{margin-top:20px;font-size:14px}
 input,select,textarea{width:100%;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,.05);
   border:1px solid var(--line);color:var(--txt);font-size:14px;font-family:inherit}
-#login button,.btn{margin-top:12px;padding:12px 16px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
-.btn{background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a1407}
+.btn{margin-top:12px;padding:12px 16px;border:none;border-radius:10px;font-weight:700;cursor:pointer;
+  background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a1407}
 .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
-.err{color:#f0a37a;font-size:12px;margin-top:10px;min-height:16px}
-/* app */
 #app{display:none;max-width:980px;margin:0 auto;padding:18px 16px 80px}
 .top{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:18px}
 .top .logo{font-weight:700;letter-spacing:4px}
@@ -30,7 +26,6 @@ input,select,textarea{width:100%;padding:11px 12px;border-radius:10px;background
 h2.sec{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin:22px 0 10px;font-weight:700}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 label{display:block;font-size:11px;color:var(--muted);margin:0 0 4px;text-transform:uppercase;letter-spacing:.5px}
 .field{margin-bottom:4px}
 .price{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 20px;margin-top:6px}
@@ -38,21 +33,17 @@ label{display:block;font-size:11px;color:var(--muted);margin:0 0 4px;text-transf
 .price .row b{color:var(--gold2)}
 .price .total{font-size:18px}
 .price .total b{font-size:20px}
-.actions{position:sticky;bottom:0;background:linear-gradient(0deg,var(--bg) 60%,transparent);padding:16px 0 4px;margin-top:20px;display:flex;gap:10px;flex-wrap:wrap}
-#result{margin-top:12px;font-size:13px}
+.actions{position:sticky;bottom:0;background:linear-gradient(0deg,var(--bg) 60%,transparent);padding:16px 0 4px;margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+#result{margin-top:4px;font-size:13px}
 .ok{color:#8fe0a0}
-@media(max-width:720px){.grid,.grid2,.price{grid-template-columns:1fr}}
+@media(max-width:720px){.grid,.price{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<div id="login">
+<div id="gate">
   <div class="logo">IMPERIUM <b>LUXURY</b></div>
-  <h1>New Rental</h1>
-  <p>Internal use. Enter the password.</p>
-  <input id="pw" type="password" placeholder="Password" autocomplete="current-password"/>
-  <button id="enter" class="btn" style="width:100%">Enter</button>
-  <div class="err" id="loginErr"></div>
+  <p>Open this from the Imperium dashboard &rarr; New Rental.</p>
 </div>
 
 <div id="app">
@@ -157,18 +148,19 @@ label{display:block;font-size:11px;color:var(--muted);margin:0 0 4px;text-transf
 <script>
 var API='https://mactclkjxhczmysjsakf.supabase.co/functions/v1/new-rental';
 var ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hY3RjbGtqeGhjem15c2pzYWtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3NDE4NzIsImV4cCI6MjEwMDMxNzg3Mn0.eldabq6dEf1WsCpAJ4qFgsApaeCl8N51deHesYfhpvw';
-var pw='', cars=[];
+var PW='Imp-rental-Qv83kP2z';
+var cars=[];
 function $(id){return document.getElementById(id);}
 function v(id){return ($(id).value||'').trim();}
 function api(payload){
-  payload.password=pw;
+  payload.password=PW;
   return fetch(API,{method:'POST',headers:{'apikey':ANON,'Authorization':'Bearer '+ANON,'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){return r.json();});
 }
 function money(n){return '$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 
-function doLogin(){
-  var val=$('pw').value; if(!val)return;
-  pw=val; $('loginErr').textContent='Checking...';
+function init(){
+  // only usable embedded inside the dashboard
+  if(window.top===window.self){ $('gate').style.display='block'; return; }
   api({action:'list_cars'}).then(function(res){
     if(res&&res.ok){
       cars=res.cars||[];
@@ -180,9 +172,9 @@ function doLogin(){
         sel.appendChild(o);
       });
       onCar();
-      $('login').style.display='none'; $('app').style.display='block';
-    } else { pw=''; $('loginErr').textContent='Wrong password.'; }
-  }).catch(function(){ pw=''; $('loginErr').textContent='Connection error.'; });
+      $('app').style.display='block';
+    } else { $('gate').style.display='block'; $('gate').querySelector('p').textContent='Could not load. Reload the dashboard.'; }
+  }).catch(function(){ $('gate').style.display='block'; $('gate').querySelector('p').textContent='Connection error.'; });
 }
 function onCar(){
   var c=cars.filter(function(x){return x.plate===$('car').value;})[0];
@@ -224,13 +216,12 @@ function submit(){
     else { $('result').innerHTML='<span style="color:#f0a37a">Error: '+(r.error||'')+'</span>'; }
   }).catch(function(e){ $('submit').disabled=false; $('result').innerHTML='<span style="color:#f0a37a">Network error</span>'; });
 }
-$('enter').onclick=doLogin;
-$('pw').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 $('testG').onclick=testGoogle;
 $('submit').onclick=submit;
 $('car').addEventListener('change',onCar);
 ['start_at','end_at'].forEach(function(id){$(id).addEventListener('change',calcDays);});
 ['daily_rate','days','discount_pct'].forEach(function(id){$(id).addEventListener('input',calc);});
+init();
 </script>
 </body>
 </html>
