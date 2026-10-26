@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Imperium - New Rental</title>
+<style>
+:root{--bg:#0a0a0c;--panel:#141418;--line:#26262e;--gold:#c9a24b;--gold2:#ecca6a;--txt:#f2f2f5;--muted:#9a9aa6;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:Arial,Helvetica,sans-serif;font-size:14px}
+.serif{font-family:Georgia,'Times New Roman',serif}
+a{color:var(--gold2)}
+/* login */
+#login{max-width:360px;margin:12vh auto 0;text-align:center;padding:0 16px}
+#login .logo{font-size:22px;font-weight:700;letter-spacing:5px}
+#login .logo b{color:var(--gold)}
+#login h1{font-size:18px;font-weight:600;margin:26px 0 4px}
+#login p{color:var(--muted);font-size:13px;margin:0 0 20px}
+input,select,textarea{width:100%;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,.05);
+  border:1px solid var(--line);color:var(--txt);font-size:14px;font-family:inherit}
+#login button,.btn{margin-top:12px;padding:12px 16px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn{background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a1407}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+.err{color:#f0a37a;font-size:12px;margin-top:10px;min-height:16px}
+/* app */
+#app{display:none;max-width:980px;margin:0 auto;padding:18px 16px 80px}
+.top{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:18px}
+.top .logo{font-weight:700;letter-spacing:4px}
+.top .logo b{color:var(--gold2)}
+h2.sec{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin:22px 0 10px;font-weight:700}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+label{display:block;font-size:11px;color:var(--muted);margin:0 0 4px;text-transform:uppercase;letter-spacing:.5px}
+.field{margin-bottom:4px}
+.price{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 20px;margin-top:6px}
+.price .row{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0}
+.price .row b{color:var(--gold2)}
+.price .total{font-size:18px}
+.price .total b{font-size:20px}
+.actions{position:sticky;bottom:0;background:linear-gradient(0deg,var(--bg) 60%,transparent);padding:16px 0 4px;margin-top:20px;display:flex;gap:10px;flex-wrap:wrap}
+#result{margin-top:12px;font-size:13px}
+.ok{color:#8fe0a0}
+@media(max-width:720px){.grid,.grid2,.price{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="logo">IMPERIUM <b>LUXURY</b></div>
+  <h1>New Rental</h1>
+  <p>Internal use. Enter the password.</p>
+  <input id="pw" type="password" placeholder="Password" autocomplete="current-password"/>
+  <button id="enter" class="btn" style="width:100%">Enter</button>
+  <div class="err" id="loginErr"></div>
+</div>
+
+<div id="app">
+  <div class="top">
+    <div class="logo">IMPERIUM <b>LUXURY</b> &middot; New Rental</div>
+    <button class="btn ghost" id="testG">Test Google</button>
+  </div>
+
+  <h2 class="sec">Agreement</h2>
+  <div class="card grid">
+    <div class="field"><label>Agreement # (number only)</label><input id="agreement_no" type="number" placeholder="241"/></div>
+    <div class="field"><label>Opened by</label><input id="opened_by" value="Rodrigo Raizer"/></div>
+    <div class="field"><label>Source / Ref</label><input id="ref" placeholder="CALL - GOOGLE ADS"/></div>
+  </div>
+
+  <h2 class="sec">Customer</h2>
+  <div class="card">
+    <div class="grid">
+      <div class="field"><label>Full name</label><input id="client_name"/></div>
+      <div class="field"><label>Email</label><input id="client_email"/></div>
+      <div class="field"><label>Phone</label><input id="client_phone"/></div>
+      <div class="field"><label>Birth date</label><input id="client_dob" placeholder="YYYY-MM-DD"/></div>
+      <div class="field"><label>Nationality</label><input id="nationality" placeholder="AMERICAN"/></div>
+      <div class="field"><label>Home address</label><input id="client_address"/></div>
+      <div class="field"><label>City</label><input id="client_city"/></div>
+      <div class="field"><label>State</label><input id="client_state"/></div>
+      <div class="field"><label>Zip</label><input id="client_zip"/></div>
+      <div class="field"><label>Driver license no.</label><input id="license_no"/></div>
+      <div class="field"><label>License state</label><input id="license_state"/></div>
+      <div class="field"><label>License expires</label><input id="license_expires" placeholder="YYYY-MM-DD"/></div>
+    </div>
+  </div>
+
+  <h2 class="sec">Vehicle &amp; Dates</h2>
+  <div class="card">
+    <div class="grid">
+      <div class="field"><label>Car</label><select id="car"></select></div>
+      <div class="field"><label>Daily rate ($)</label><input id="daily_rate" type="number" step="0.01"/></div>
+      <div class="field"><label>Deposit ($)</label><input id="deposit" type="number" step="0.01"/></div>
+      <div class="field"><label>Start date (OUT)</label><input id="start_at" type="date"/></div>
+      <div class="field"><label>End date (IN)</label><input id="end_at" type="date"/></div>
+      <div class="field"><label>Days</label><input id="days" type="number"/></div>
+      <div class="field"><label>Delivery time</label><input id="delivery_time" placeholder="9:00 AM"/></div>
+      <div class="field"><label>Pickup time</label><input id="pickup_time" placeholder="5:30 PM"/></div>
+      <div class="field"><label>Discount (%)</label><input id="discount_pct" type="number" step="0.01" value="0"/></div>
+      <div class="field" style="grid-column:1/3"><label>Delivery address</label><input id="delivery_address"/></div>
+      <div class="field"><label>Pickup address</label><input id="pickup_address"/></div>
+    </div>
+    <div class="price">
+      <div class="row"><span>Base (rate x days)</span><b id="p_base">$0.00</b></div>
+      <div class="row"><span>Discount</span><b id="p_disc">$0.00</b></div>
+      <div class="row"><span>Subtotal (net)</span><b id="p_sub">$0.00</b></div>
+      <div class="row"><span>Taxes &amp; fees (10%)</span><b id="p_tax">$0.00</b></div>
+      <div class="row"><span>SunPass ($10/day)</span><b id="p_sun">$0.00</b></div>
+      <div class="row total"><span>TOTAL</span><b id="p_total">$0.00</b></div>
+    </div>
+  </div>
+
+  <h2 class="sec">Insurance</h2>
+  <div class="card grid">
+    <div class="field"><label>Insurer</label><input id="insurer"/></div>
+    <div class="field"><label>Policy number</label><input id="policy_number"/></div>
+    <div class="field"><label>Policy expiration</label><input id="policy_expiration" placeholder="YYYY-MM-DD"/></div>
+  </div>
+
+  <h2 class="sec">Payment</h2>
+  <div class="card grid">
+    <div class="field"><label>Type</label><select id="payment_type">
+      <option>Credit Card</option><option>Link of Payment</option><option>Cash</option>
+      <option>Zelle</option><option>Wire</option></select></div>
+    <div class="field" style="grid-column:2/4"><label>Description</label><input id="payment_description"/></div>
+  </div>
+
+  <h2 class="sec">Additional driver (optional)</h2>
+  <div class="card grid">
+    <div class="field"><label>Name</label><input id="additional_driver_name"/></div>
+    <div class="field"><label>Birth date</label><input id="additional_driver_dob" placeholder="YYYY-MM-DD"/></div>
+    <div class="field"><label>License no.</label><input id="additional_driver_license"/></div>
+    <div class="field"><label>State</label><input id="additional_driver_state"/></div>
+    <div class="field"><label>Expires</label><input id="additional_driver_expires" placeholder="YYYY-MM-DD"/></div>
+  </div>
+
+  <h2 class="sec">Broker (optional)</h2>
+  <div class="card grid">
+    <div class="field"><label>Broker name</label><input id="broker_name"/></div>
+    <div class="field"><label>Broker email</label><input id="broker_email"/></div>
+    <div class="field"><label>Rate (0.15 = 15%)</label><input id="broker_rate" type="number" step="0.01"/></div>
+    <div class="field"><label>Commission ($)</label><input id="broker_commission" type="number" step="0.01"/></div>
+    <div class="field"><label>Address</label><input id="broker_address"/></div>
+    <div class="field"><label>EIN</label><input id="broker_ein"/></div>
+  </div>
+
+  <h2 class="sec">Notes</h2>
+  <div class="card"><textarea id="notes" rows="2"></textarea></div>
+
+  <div class="actions">
+    <button class="btn" id="submit">Create rental + contract</button>
+    <span id="result"></span>
+  </div>
+</div>
+
+<script>
+var API='https://mactclkjxhczmysjsakf.supabase.co/functions/v1/new-rental';
+var ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hY3RjbGtqeGhjem15c2pzYWtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3NDE4NzIsImV4cCI6MjEwMDMxNzg3Mn0.eldabq6dEf1WsCpAJ4qFgsApaeCl8N51deHesYfhpvw';
+var pw='', cars=[];
+function $(id){return document.getElementById(id);}
+function v(id){return ($(id).value||'').trim();}
+function api(payload){
+  payload.password=pw;
+  return fetch(API,{method:'POST',headers:{'apikey':ANON,'Authorization':'Bearer '+ANON,'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){return r.json();});
+}
+function money(n){return '$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function doLogin(){
+  var val=$('pw').value; if(!val)return;
+  pw=val; $('loginErr').textContent='Checking...';
+  api({action:'list_cars'}).then(function(res){
+    if(res&&res.ok){
+      cars=res.cars||[];
+      var sel=$('car'); sel.innerHTML='';
+      cars.forEach(function(c){
+        var o=document.createElement('option');
+        o.value=c.plate;
+        o.textContent=c.make+' '+c.model+' ('+c.color+') - '+c.plate+(c.status&&c.status!=='available'?' ['+c.status+']':'');
+        sel.appendChild(o);
+      });
+      onCar();
+      $('login').style.display='none'; $('app').style.display='block';
+    } else { pw=''; $('loginErr').textContent='Wrong password.'; }
+  }).catch(function(){ pw=''; $('loginErr').textContent='Connection error.'; });
+}
+function onCar(){
+  var c=cars.filter(function(x){return x.plate===$('car').value;})[0];
+  if(c){ if(!v('daily_rate'))$('daily_rate').value=c.price; $('deposit').value=c.deposit; calc(); }
+}
+function calcDays(){
+  var s=v('start_at'), e=v('end_at');
+  if(s&&e){ var d=Math.round((new Date(e)-new Date(s))/86400000); if(d>0)$('days').value=d; }
+  calc();
+}
+function calc(){
+  var rate=Number(v('daily_rate'))||0, days=Number(v('days'))||0, pct=Number(v('discount_pct'))||0;
+  var base=rate*days, disc=base*pct/100, sub=base-disc, tax=sub*0.10, sun=10*days, total=sub+tax+sun;
+  $('p_base').textContent=money(base); $('p_disc').textContent='-'+money(disc);
+  $('p_sub').textContent=money(sub); $('p_tax').textContent=money(tax);
+  $('p_sun').textContent=money(sun); $('p_total').textContent=money(total);
+}
+function testGoogle(){
+  $('result').textContent='Testing Google...';
+  api({action:'test_google'}).then(function(r){
+    $('result').innerHTML = r.ok ? '<span class="ok">Google OK - template: '+(r.template&&r.template.name)+'</span>'
+                                 : '<span style="color:#f0a37a">Google error: '+(r.error||'')+'</span>';
+  });
+}
+function submit(){
+  if(!v('agreement_no')){ $('result').innerHTML='<span style="color:#f0a37a">Agreement # required</span>'; return; }
+  $('submit').disabled=true; $('result').textContent='Creating...';
+  var ids=['agreement_no','opened_by','ref','client_name','client_email','client_phone','client_dob','nationality',
+    'client_address','client_city','client_state','client_zip','license_no','license_state','license_expires',
+    'daily_rate','deposit','start_at','end_at','days','delivery_time','pickup_time','discount_pct',
+    'delivery_address','pickup_address','insurer','policy_number','policy_expiration','payment_type','payment_description',
+    'additional_driver_name','additional_driver_dob','additional_driver_license','additional_driver_state','additional_driver_expires',
+    'broker_name','broker_email','broker_rate','broker_commission','broker_address','broker_ein','notes'];
+  var p={action:'create'}; ids.forEach(function(k){p[k]=v(k);}); p.plate=v('car');
+  api(p).then(function(r){
+    $('submit').disabled=false;
+    if(r.ok){ $('result').innerHTML='<span class="ok">Created '+r.agreement+' - total '+money(r.total)+
+        '. <a href="'+r.contract_url+'" target="_blank">Open contract</a></span>'; }
+    else { $('result').innerHTML='<span style="color:#f0a37a">Error: '+(r.error||'')+'</span>'; }
+  }).catch(function(e){ $('submit').disabled=false; $('result').innerHTML='<span style="color:#f0a37a">Network error</span>'; });
+}
+$('enter').onclick=doLogin;
+$('pw').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+$('testG').onclick=testGoogle;
+$('submit').onclick=submit;
+$('car').addEventListener('change',onCar);
+['start_at','end_at'].forEach(function(id){$(id).addEventListener('change',calcDays);});
+['daily_rate','days','discount_pct'].forEach(function(id){$(id).addEventListener('input',calc);});
+</script>
+</body>
+</html>
