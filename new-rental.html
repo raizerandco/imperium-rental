@@ -209,6 +209,8 @@ function init(){
       });
       onCar();
       $('app').style.display='block';
+      // prefill the next free agreement number (still editable)
+      api({action:'next_agreement'}).then(function(r){ if(r&&r.ok&&r.next&&!v('agreement_no')) $('agreement_no').value=r.next; }).catch(function(){});
     } else { $('gate').style.display='block'; $('gate').querySelector('p').textContent='Could not load. Reload the dashboard.'; }
   }).catch(function(){ $('gate').style.display='block'; $('gate').querySelector('p').textContent='Connection error.'; });
 }
