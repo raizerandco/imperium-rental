@@ -167,22 +167,31 @@ function api(payload){
 function money(n){return '$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 var DOCS_API='https://mactclkjxhczmysjsakf.supabase.co/functions/v1/docs';
 function docsApi(payload){payload.password=PW;return fetch(DOCS_API,{method:'POST',headers:{'apikey':ANON,'Authorization':'Bearer '+ANON,'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){return r.json();});}
-function compress(file){return new Promise(function(res,rej){
-  if(file.type==='application/pdf'){var fr=new FileReader();fr.onload=function(){res({ct:'application/pdf',data:fr.result});};fr.onerror=rej;fr.readAsDataURL(file);return;}
-  var fr=new FileReader();fr.onload=function(){var img=new Image();img.onload=function(){var max=1600,w=img.width,h=img.height,sc=Math.min(1,max/Math.max(w,h));var cw=Math.round(w*sc),ch=Math.round(h*sc);var cv=document.createElement('canvas');cv.width=cw;cv.height=ch;cv.getContext('2d').drawImage(img,0,0,cw,ch);res({ct:'image/jpeg',data:cv.toDataURL('image/jpeg',0.82)});};img.onerror=rej;img.src=fr.result;};fr.onerror=rej;fr.readAsDataURL(file);
+// Prepare a file for upload. Always resolves: downscales large JPEG/PNG, otherwise
+// (incl. HEIC, PDF, small images, or any canvas failure) sends the ORIGINAL bytes.
+function prepFile(file){return new Promise(function(res){
+  var original=function(){var fr=new FileReader();fr.onload=function(){res({ct:file.type||'application/octet-stream',data:fr.result,name:file.name});};fr.onerror=function(){res(null);};fr.readAsDataURL(file);};
+  var canCanvas=(file.type==='image/jpeg'||file.type==='image/png');
+  if(!canCanvas || file.size<=2*1024*1024){original();return;}
+  var fr=new FileReader();fr.onload=function(){var img=new Image();
+    img.onload=function(){try{var max=1800,w=img.width,h=img.height,sc=Math.min(1,max/Math.max(w,h));var cw=Math.round(w*sc),ch=Math.round(h*sc);var cv=document.createElement('canvas');cv.width=cw;cv.height=ch;cv.getContext('2d').drawImage(img,0,0,cw,ch);res({ct:'image/jpeg',data:cv.toDataURL('image/jpeg',0.85),name:file.name});}catch(e){original();}};
+    img.onerror=function(){original();};img.src=fr.result;};
+  fr.onerror=function(){original();};fr.readAsDataURL(file);
 });}
 function syncDocFields(){var t=$('client_type').value;$('f_insurance').style.display=(t==='american')?'':'none';$('f_passport').style.display=(t==='tourist')?'':'none';}
 function uploadDocs(rentalId){
   var type=$('client_type').value;
+  var labels={license:'license',insurance:'insurance',passport:'passport'};
   var slots=type==='tourist'?[['license','doc_license'],['passport','doc_passport']]:[['license','doc_license'],['insurance','doc_insurance']];
   var chain=docsApi({action:'set_type',rental_id:rentalId,client_type:type}).catch(function(){});
   var pending=slots.filter(function(s){var el=$(s[1]);return el&&el.files&&el.files[0];});
-  var done=0,total=pending.length;
-  if(!total)return chain.then(function(){return {uploaded:0,total:0};});
-  pending.forEach(function(s){chain=chain.then(function(){return compress($(s[1]).files[0]);})
-    .then(function(c){return docsApi({action:'upload',rental_id:rentalId,slot:s[0],content_type:c.ct,data:c.data});})
-    .then(function(r){if(r&&r.ok)done++;}).catch(function(){});});
-  return chain.then(function(){return {uploaded:done,total:total};});
+  var done=0,total=pending.length,failed=[];
+  if(!total)return chain.then(function(){return {uploaded:0,total:0,failed:[]};});
+  pending.forEach(function(s){chain=chain.then(function(){return prepFile($(s[1]).files[0]);})
+    .then(function(c){if(!c){failed.push(labels[s[0]]);return;}return docsApi({action:'upload',rental_id:rentalId,slot:s[0],content_type:c.ct,data:c.data,filename:c.name})
+      .then(function(r){if(r&&r.ok)done++;else failed.push(labels[s[0]]);});})
+    .catch(function(){failed.push(labels[s[0]]);});});
+  return chain.then(function(){return {uploaded:done,total:total,failed:failed};});
 }
 
 function init(){
@@ -239,8 +248,10 @@ function submit(){
   api(p).then(function(r){
     $('submit').disabled=false;
     if(r.ok){ $('result').innerHTML='<span class="ok">Created '+r.agreement+' - uploading documents...</span>';
-        uploadDocs(r.id).then(function(u){var dm=u.total?(' - '+u.uploaded+'/'+u.total+' document(s) uploaded'):'';
-          $('result').innerHTML='<span class="ok">Created '+r.agreement+' - total '+money(r.total)+dm+'. <a href="'+r.contract_url+'" target="_blank">Open contract</a></span>'; }); }
+        uploadDocs(r.id).then(function(u){
+          var dm=u.total?(' - '+u.uploaded+'/'+u.total+' document(s) uploaded'):' - no documents attached';
+          var warn=(u.failed&&u.failed.length)?(' <span style="color:#f0a37a">(failed: '+u.failed.join(', ')+' - re-upload from the rental card)</span>'):'';
+          $('result').innerHTML='<span class="ok">Created '+r.agreement+' - total '+money(r.total)+dm+'.</span>'+warn+' <a href="'+r.contract_url+'" target="_blank">Open contract</a>'; }); }
     else { $('result').innerHTML='<span style="color:#f0a37a">Error: '+(r.error||'')+'</span>'; }
   }).catch(function(e){ $('submit').disabled=false; $('result').innerHTML='<span style="color:#f0a37a">Network error</span>'; });
 }
