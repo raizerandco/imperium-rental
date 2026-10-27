@@ -136,6 +136,14 @@ label{display:block;font-size:11px;color:var(--muted);margin:0 0 4px;text-transf
     <div class="field"><label>EIN</label><input id="broker_ein"/></div>
   </div>
 
+  <h2 class="sec">Documents</h2>
+  <div class="card grid">
+    <div class="field"><label>Client type</label><select id="client_type"><option value="american">American (license + insurance)</option><option value="tourist">Tourist (license + passport)</option></select></div>
+    <div class="field" id="f_license"><label>Driver license (photo or PDF)</label><input id="doc_license" type="file" accept="image/*,application/pdf"/></div>
+    <div class="field" id="f_insurance"><label>Insurance (photo or PDF)</label><input id="doc_insurance" type="file" accept="image/*,application/pdf"/></div>
+    <div class="field" id="f_passport"><label>Passport (photo or PDF)</label><input id="doc_passport" type="file" accept="image/*,application/pdf"/></div>
+  </div>
+
   <h2 class="sec">Notes</h2>
   <div class="card"><textarea id="notes" rows="2"></textarea></div>
 
@@ -157,6 +165,25 @@ function api(payload){
   return fetch(API,{method:'POST',headers:{'apikey':ANON,'Authorization':'Bearer '+ANON,'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){return r.json();});
 }
 function money(n){return '$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+var DOCS_API='https://mactclkjxhczmysjsakf.supabase.co/functions/v1/docs';
+function docsApi(payload){payload.password=PW;return fetch(DOCS_API,{method:'POST',headers:{'apikey':ANON,'Authorization':'Bearer '+ANON,'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){return r.json();});}
+function compress(file){return new Promise(function(res,rej){
+  if(file.type==='application/pdf'){var fr=new FileReader();fr.onload=function(){res({ct:'application/pdf',data:fr.result});};fr.onerror=rej;fr.readAsDataURL(file);return;}
+  var fr=new FileReader();fr.onload=function(){var img=new Image();img.onload=function(){var max=1600,w=img.width,h=img.height,sc=Math.min(1,max/Math.max(w,h));var cw=Math.round(w*sc),ch=Math.round(h*sc);var cv=document.createElement('canvas');cv.width=cw;cv.height=ch;cv.getContext('2d').drawImage(img,0,0,cw,ch);res({ct:'image/jpeg',data:cv.toDataURL('image/jpeg',0.82)});};img.onerror=rej;img.src=fr.result;};fr.onerror=rej;fr.readAsDataURL(file);
+});}
+function syncDocFields(){var t=$('client_type').value;$('f_insurance').style.display=(t==='american')?'':'none';$('f_passport').style.display=(t==='tourist')?'':'none';}
+function uploadDocs(rentalId){
+  var type=$('client_type').value;
+  var slots=type==='tourist'?[['license','doc_license'],['passport','doc_passport']]:[['license','doc_license'],['insurance','doc_insurance']];
+  var chain=docsApi({action:'set_type',rental_id:rentalId,client_type:type}).catch(function(){});
+  var pending=slots.filter(function(s){var el=$(s[1]);return el&&el.files&&el.files[0];});
+  var done=0,total=pending.length;
+  if(!total)return chain.then(function(){return {uploaded:0,total:0};});
+  pending.forEach(function(s){chain=chain.then(function(){return compress($(s[1]).files[0]);})
+    .then(function(c){return docsApi({action:'upload',rental_id:rentalId,slot:s[0],content_type:c.ct,data:c.data});})
+    .then(function(r){if(r&&r.ok)done++;}).catch(function(){});});
+  return chain.then(function(){return {uploaded:done,total:total};});
+}
 
 function init(){
   // only usable embedded inside the dashboard
@@ -211,14 +238,16 @@ function submit(){
   var p={action:'create'}; ids.forEach(function(k){p[k]=v(k);}); p.plate=v('car');
   api(p).then(function(r){
     $('submit').disabled=false;
-    if(r.ok){ $('result').innerHTML='<span class="ok">Created '+r.agreement+' - total '+money(r.total)+
-        '. <a href="'+r.contract_url+'" target="_blank">Open contract</a></span>'; }
+    if(r.ok){ $('result').innerHTML='<span class="ok">Created '+r.agreement+' - uploading documents...</span>';
+        uploadDocs(r.id).then(function(u){var dm=u.total?(' - '+u.uploaded+'/'+u.total+' document(s) uploaded'):'';
+          $('result').innerHTML='<span class="ok">Created '+r.agreement+' - total '+money(r.total)+dm+'. <a href="'+r.contract_url+'" target="_blank">Open contract</a></span>'; }); }
     else { $('result').innerHTML='<span style="color:#f0a37a">Error: '+(r.error||'')+'</span>'; }
   }).catch(function(e){ $('submit').disabled=false; $('result').innerHTML='<span style="color:#f0a37a">Network error</span>'; });
 }
 $('testG').onclick=testGoogle;
 $('submit').onclick=submit;
 $('car').addEventListener('change',onCar);
+$('client_type').addEventListener('change',syncDocFields); syncDocFields();
 ['start_at','end_at'].forEach(function(id){$(id).addEventListener('change',calcDays);});
 ['daily_rate','days','discount_pct'].forEach(function(id){$(id).addEventListener('input',calc);});
 init();
