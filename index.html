@@ -159,9 +159,25 @@
       </div>
     </section>
 
-    <!-- 4. documents -->
+    <!-- 4. broker / referral -->
     <section>
-      <div class="step"><div class="n">4</div><h2>Documents</h2></div>
+      <div class="step"><div class="n">4</div><h2>Broker / Referral <span style="font-weight:400;font-size:13px;color:var(--muted)">(optional)</span></h2></div>
+      <div class="row">
+        <div class="field"><label>Broker name</label><input id="b_name" placeholder="Broker full name"></div>
+        <div class="field"><label>Where they work (company)</label><input id="b_company" placeholder="Agency / hotel / company"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Broker email</label><input id="b_email" type="email" placeholder="broker@email.com"></div>
+        <div class="field"><label>Broker phone</label><input id="b_phone" placeholder="+1 ..."></div>
+      </div>
+      <div class="row">
+        <div class="field full"><label>Imperium sales rep who connected you</label><input id="b_rep" placeholder="Name of the Imperium rep"></div>
+      </div>
+    </section>
+
+    <!-- 5. documents -->
+    <section>
+      <div class="step"><div class="n">5</div><h2>Documents</h2></div>
       <div class="field full" style="margin-bottom:14px">
         <label>Client type <span class="req">*</span></label>
         <div class="ctype">
@@ -327,6 +343,11 @@
     fd.append('license_no',document.getElementById('f_lic').value.trim());
     fd.append('license_state',document.getElementById('f_licstate').value.trim());
     fd.append('license_exp',document.getElementById('f_licexp').value||'');
+    fd.append('broker_name',document.getElementById('b_name').value.trim());
+    fd.append('broker_company',document.getElementById('b_company').value.trim());
+    fd.append('broker_email',document.getElementById('b_email').value.trim());
+    fd.append('broker_phone',document.getElementById('b_phone').value.trim());
+    fd.append('sales_rep',document.getElementById('b_rep').value.trim());
     var fmap={'Driver license (front)':'doc_license_front','Driver license (back)':'doc_license_back','Passport':'doc_passport','Insurance':'doc_insurance'};
     Array.prototype.forEach.call(document.querySelectorAll('.drop'),function(box){
       if(box.style.display==='none')return;

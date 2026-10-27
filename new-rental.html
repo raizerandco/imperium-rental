@@ -194,6 +194,32 @@ function uploadDocs(rentalId){
   return chain.then(function(){return {uploaded:done,total:total,failed:failed};});
 }
 
+var REQ_API='https://mactclkjxhczmysjsakf.supabase.co/functions/v1/requests';
+var REQ_ID=null;
+function reqApi(payload){payload.password=PW;return fetch(REQ_API,{method:'POST',headers:{'apikey':ANON,'Authorization':'Bearer '+ANON,'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){return r.json();});}
+function setIf(id,val){if(val!=null&&val!==''){var e=$(id);if(e&&!v(id))e.value=val;}}
+function norm(s){return (s||'').toLowerCase().replace(/[^a-z0-9]/g,'');}
+function matchCar(mk,mo,cl){ if(!cars||!cars.length||!mo)return; var best=null;
+  cars.forEach(function(c){ var m=norm(c.model),want=norm(mo); if(m===want||m.indexOf(want)>=0||want.indexOf(m)>=0){ if(!best)best=c; if(cl&&norm(c.color)===norm(cl))best=c; } });
+  if(best){$('car').value=best.plate; onCar();} }
+function prefillFromRequest(){
+  var m=(location.search||'').match(/[?&]request=([^&]+)/); if(!m)return; REQ_ID=decodeURIComponent(m[1]);
+  reqApi({action:'get',id:REQ_ID}).then(function(res){ if(!res||!res.ok||!res.request)return; var q=res.request;
+    setIf('client_name',q.full_name); setIf('client_email',q.email); setIf('client_phone',q.phone);
+    setIf('nationality',q.nationality); setIf('client_address',q.address); setIf('client_city',q.city);
+    setIf('client_state',q.state); setIf('client_zip',q.zip); setIf('client_dob',q.dob);
+    setIf('license_no',q.license_no); setIf('license_state',q.license_state); setIf('license_expires',q.license_exp);
+    setIf('start_at',q.pickup_date); setIf('days',q.days!=null?String(q.days):'');
+    setIf('broker_name',q.broker_name); setIf('broker_email',q.broker_email);
+    if(q.client_type==='US') $('client_type').value='american'; else if(q.client_type==='International') $('client_type').value='tourist';
+    syncDocFields();
+    var extra=[]; if(q.broker_name)extra.push('Broker: '+q.broker_name+(q.broker_company?(' ('+q.broker_company+')'):'')+(q.broker_phone?(' '+q.broker_phone):'')); if(q.sales_rep)extra.push('Sales rep: '+q.sales_rep);
+    if(extra.length){var nt=$('notes'); nt.value=(nt.value?nt.value+'\n':'')+extra.join(' | ');}
+    matchCar(q.car_make,q.car_model,q.car_color);
+    calcDays(); calc();
+    $('result').innerHTML='<span class="ok">Prefilled from request. Confirm the car/plate, adjust anything, then create.</span>';
+  }).catch(function(){});
+}
 function init(){
   // only usable embedded inside the dashboard
   if(window.top===window.self){ $('gate').style.display='block'; return; }
@@ -211,6 +237,7 @@ function init(){
       $('app').style.display='block';
       // prefill the next free agreement number (still editable)
       api({action:'next_agreement'}).then(function(r){ if(r&&r.ok&&r.next&&!v('agreement_no')) $('agreement_no').value=r.next; }).catch(function(){});
+      prefillFromRequest();
     } else { $('gate').style.display='block'; $('gate').querySelector('p').textContent='Could not load. Reload the dashboard.'; }
   }).catch(function(){ $('gate').style.display='block'; $('gate').querySelector('p').textContent='Connection error.'; });
 }
@@ -251,9 +278,14 @@ function submit(){
     $('submit').disabled=false;
     if(r.ok){ $('result').innerHTML='<span class="ok">Created '+r.agreement+' - uploading documents...</span>';
         uploadDocs(r.id).then(function(u){
-          var dm=u.total?(' - '+u.uploaded+'/'+u.total+' document(s) uploaded'):' - no documents attached';
-          var warn=(u.failed&&u.failed.length)?(' <span style="color:#f0a37a">(failed: '+u.failed.join(', ')+' - re-upload from the rental card)</span>'):'';
-          $('result').innerHTML='<span class="ok">Created '+r.agreement+' - total '+money(r.total)+dm+'.</span>'+warn+' <a href="'+r.contract_url+'" target="_blank">Open contract</a>'; }); }
+          function finish(reqNote){
+            var dm=u.total?(' - '+u.uploaded+'/'+u.total+' document(s) uploaded'):(reqNote?'':' - no documents attached');
+            var warn=(u.failed&&u.failed.length)?(' <span style="color:#f0a37a">(failed: '+u.failed.join(', ')+' - re-upload from the rental card)</span>'):'';
+            $('result').innerHTML='<span class="ok">Created '+r.agreement+' - total '+money(r.total)+dm+(reqNote||'')+'.</span>'+warn+' <a href="'+r.contract_url+'" target="_blank">Open contract</a>';
+          }
+          if(REQ_ID){ reqApi({action:'attach_to_rental',request_id:REQ_ID,rental_id:r.id}).then(function(ar){ finish((ar&&ar.ok&&ar.copied&&ar.copied.length)?(' + '+ar.copied.length+' document(s) from the request'):' - request accepted'); }).catch(function(){finish(' - request accepted');}); }
+          else finish('');
+        }); }
     else { $('result').innerHTML='<span style="color:#f0a37a">Error: '+(r.error||'')+'</span>'; }
   }).catch(function(e){ $('submit').disabled=false; $('result').innerHTML='<span style="color:#f0a37a">Network error</span>'; });
 }
