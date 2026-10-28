@@ -68,6 +68,7 @@
   .drop{position:relative;border:1px dashed rgba(255,255,255,0.22);border-radius:14px;padding:16px;text-align:center;
     background:rgba(255,255,255,0.02);transition:border-color .15s}
   .drop:hover{border-color:var(--gold)}
+  .drop.drag{border-color:var(--gold);background:rgba(212,175,55,0.08)}
   .drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
   .drop .t{font-size:13px;font-weight:600}
   .drop .h{font-size:11px;color:var(--muted);margin-top:3px}
@@ -187,10 +188,10 @@
         <div class="h" style="font-size:11px;color:var(--muted);margin-top:8px">US clients upload insurance. International clients upload passport. Driver license is always required.</div>
       </div>
       <div class="up">
-        <label class="drop" id="d1"><input type="file" accept="image/*" data-k="Driver license (front)"><div class="t">License — front</div><div class="h">Photo</div><div class="fn"></div></label>
-        <label class="drop" id="d2"><input type="file" accept="image/*" data-k="Driver license (back)"><div class="t">License — back</div><div class="h">Photo</div><div class="fn"></div></label>
-        <label class="drop" id="d3" style="display:none"><input type="file" accept="image/*" data-k="Passport"><div class="t">Passport</div><div class="h">Full page photo</div><div class="fn"></div></label>
-        <label class="drop" id="d4" style="display:none"><input type="file" accept="image/*,application/pdf" data-k="Insurance"><div class="t">Insurance</div><div class="h">Photo or PDF</div><div class="fn"></div></label>
+        <label class="drop" id="d1"><input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/*,application/pdf" data-k="Driver license (front)"><div class="t">License — front</div><div class="h">Photo</div><div class="fn"></div></label>
+        <label class="drop" id="d2"><input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/*,application/pdf" data-k="Driver license (back)"><div class="t">License — back</div><div class="h">Photo</div><div class="fn"></div></label>
+        <label class="drop" id="d3" style="display:none"><input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/*,application/pdf" data-k="Passport"><div class="t">Passport</div><div class="h">Full page photo</div><div class="fn"></div></label>
+        <label class="drop" id="d4" style="display:none"><input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/*,application/pdf" data-k="Insurance"><div class="t">Insurance</div><div class="h">Photo or PDF</div><div class="fn"></div></label>
       </div>
     </section>
 
@@ -283,6 +284,20 @@
     };
   });
 
+  // drag-and-drop onto the upload boxes (and stop the page from opening a dropped file)
+  (function(){
+    window.addEventListener('dragover',function(e){e.preventDefault();},false);
+    window.addEventListener('drop',function(e){ if(!(e.target&&e.target.closest&&e.target.closest('.drop'))) e.preventDefault(); },false);
+    Array.prototype.forEach.call(document.querySelectorAll('.drop'),function(box){ var inp=box.querySelector('input');
+      box.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();box.classList.add('drag');});
+      box.addEventListener('dragenter',function(e){e.preventDefault();e.stopPropagation();box.classList.add('drag');});
+      box.addEventListener('dragleave',function(){box.classList.remove('drag');});
+      box.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();box.classList.remove('drag');
+        var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; if(!f)return;
+        try{var dt=new DataTransfer();dt.items.add(f);inp.files=dt.files;}catch(err){}
+        if(inp.onchange)inp.onchange(); });
+    });
+  })();
   var clientType='';
   var ctUS=document.getElementById('ctUS'), ctINT=document.getElementById('ctINT');
   var d3=document.getElementById('d3'), d4=document.getElementById('d4');
