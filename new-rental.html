@@ -209,13 +209,20 @@ function prefillFromRequest(){
     setIf('nationality',q.nationality); setIf('client_address',q.address); setIf('client_city',q.city);
     setIf('client_state',q.state); setIf('client_zip',q.zip); setIf('client_dob',q.dob);
     setIf('license_no',q.license_no); setIf('license_state',q.license_state); setIf('license_expires',q.license_exp);
-    setIf('start_at',q.pickup_date); setIf('days',q.days!=null?String(q.days):'');
+    setIf('start_at',q.pickup_date); setIf('end_at',q.return_date); setIf('days',q.days!=null?String(q.days):'');
+    setIf('delivery_time',q.delivery_time); setIf('pickup_time',q.pickup_time);
+    setIf('delivery_address',q.delivery_address); setIf('pickup_address',q.pickup_address);
+    setIf('payment_type',q.payment_type); setIf('insurer',q.insurer); setIf('policy_number',q.policy_number); setIf('policy_expiration',q.policy_expiration);
     setIf('broker_name',q.broker_name); setIf('broker_email',q.broker_email);
     if(q.client_type==='US') $('client_type').value='american'; else if(q.client_type==='International') $('client_type').value='tourist';
     syncDocFields();
     var extra=[]; if(q.broker_name)extra.push('Broker: '+q.broker_name+(q.broker_company?(' ('+q.broker_company+')'):'')+(q.broker_phone?(' '+q.broker_phone):'')); if(q.sales_rep)extra.push('Sales rep: '+q.sales_rep);
-    if(extra.length){var nt=$('notes'); nt.value=(nt.value?nt.value+'\n':'')+extra.join(' | ');}
+    var add=[(q.notes||'')].concat(extra).filter(Boolean).join(' | ');
+    if(add){var nt=$('notes'); nt.value=(nt.value?nt.value+'\n':'')+add;}
     matchCar(q.car_make,q.car_model,q.car_color);
+    // request pricing overrides the car's default rate/deposit (set after matchCar/onCar)
+    if(q.daily_rate!=null&&q.daily_rate!=='') $('daily_rate').value=q.daily_rate;
+    if(q.deposit!=null&&q.deposit!=='') $('deposit').value=q.deposit;
     calcDays(); calc();
     $('result').innerHTML='<span class="ok">Prefilled from request. Confirm the car/plate, adjust anything, then create.</span>';
   }).catch(function(){});
