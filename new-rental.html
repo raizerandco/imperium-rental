@@ -213,6 +213,8 @@ function prefillFromRequest(){
     setIf('delivery_time',q.delivery_time); setIf('pickup_time',q.pickup_time);
     setIf('delivery_address',q.delivery_address); setIf('pickup_address',q.pickup_address);
     setIf('payment_type',q.payment_type); setIf('insurer',q.insurer); setIf('policy_number',q.policy_number); setIf('policy_expiration',q.policy_expiration);
+    setIf('additional_driver_name',q.additional_driver_name); setIf('additional_driver_dob',q.additional_driver_dob);
+    setIf('additional_driver_license',q.additional_driver_license); setIf('additional_driver_state',q.additional_driver_state); setIf('additional_driver_expires',q.additional_driver_expires);
     setIf('broker_name',q.broker_name); setIf('broker_email',q.broker_email);
     if(q.client_type==='US') $('client_type').value='american'; else if(q.client_type==='International') $('client_type').value='tourist';
     syncDocFields();
