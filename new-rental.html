@@ -224,6 +224,7 @@ function prefillFromRequest(){
     matchCar(q.car_make,q.car_model,q.car_color);
     // request pricing overrides the car's default rate/deposit (set after matchCar/onCar)
     if(q.daily_rate!=null&&q.daily_rate!=='') $('daily_rate').value=q.daily_rate;
+    if(q.discount_pct!=null&&q.discount_pct!=='') $('discount_pct').value=q.discount_pct;
     if(q.deposit!=null&&q.deposit!=='') $('deposit').value=q.deposit;
     calcDays(); calc();
     $('result').innerHTML='<span class="ok">Prefilled from request. Confirm the car/plate, adjust anything, then create.</span>';
