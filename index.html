@@ -121,8 +121,12 @@
         <div class="field"><label>Number of days <span class="req">*</span></label><input type="number" id="days" min="1" value="1"></div>
         <div class="field"><label>Return date</label><input type="date" id="returnd" readonly></div>
       </div>
+      <div class="row">
+        <div class="field"><label>Discount on net (%)</label><input type="number" id="f_disc" min="0" max="100" step="0.1" value="0" placeholder="0"></div>
+      </div>
       <div class="price" id="price">
         <div class="line">Daily rate × days <span class="v" id="pSub">—</span></div>
+        <div class="line" id="pDiscLine" style="display:none;color:#e0b65a">Discount <span class="v" id="pDisc">—</span></div>
         <div class="line">Taxes &amp; fees (10%) <span class="v" id="pTax">—</span></div>
         <div class="line">SunPass ($10/day) <span class="v" id="pSun">—</span></div>
         <div class="total"><span class="l">Estimated total</span><span class="a" id="pTotal">—</span></div>
@@ -133,7 +137,11 @@
 
     <!-- 3. info -->
     <section>
-      <div class="step"><div class="n">3</div><h2>Your information</h2></div>
+      <div class="step"><div class="n">3</div><h2>Customer information</h2></div>
+      <div class="row">
+        <div class="field full"><label>Imperium rep <span class="req">*</span></label>
+          <select id="f_rep"><option value="">Select rep…</option><option>Cesar</option><option>Alejandro</option><option>Luis</option></select></div>
+      </div>
       <div class="row">
         <div class="field"><label>Full name <span class="req">*</span></label><input id="f_name" placeholder="As on your license"></div>
         <div class="field"><label>Nationality</label><input id="f_nat" placeholder="e.g. Brazilian"></div>
@@ -192,6 +200,10 @@
         <label class="drop" id="d2"><input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/*,application/pdf" data-k="Driver license (back)"><div class="t">License — back</div><div class="h">Photo</div><div class="fn"></div></label>
         <label class="drop" id="d3" style="display:none"><input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/*,application/pdf" data-k="Passport"><div class="t">Passport</div><div class="h">Full page photo</div><div class="fn"></div></label>
         <label class="drop" id="d4" style="display:none"><input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/*,application/pdf" data-k="Insurance"><div class="t">Insurance</div><div class="h">Photo or PDF</div><div class="fn"></div></label>
+      </div>
+      <div class="field full" style="margin-top:14px">
+        <label>Additional documents (optional) — add as many as needed</label>
+        <label class="drop" id="dExtra" style="display:block"><input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/*,application/pdf" multiple><div class="t">Add photos or PDFs</div><div class="h">You can select multiple files</div><div class="fn" id="extraList"></div></label>
       </div>
     </section>
 
@@ -267,14 +279,24 @@
       return;
     }
     var car=FLEET[sel];
-    var sub=car.p*days, tax=sub*0.10, sun=10*days, total=sub+tax+sun;
-    document.getElementById('pSub').textContent=fmt(car.p)+' × '+days+' = '+fmt(sub);
+    var disc=parseFloat(document.getElementById('f_disc').value)||0; if(disc<0)disc=0; if(disc>100)disc=100;
+    var net=car.p*days, discAmt=net*disc/100, sub=net-discAmt, tax=sub*0.10, sun=10*days, total=sub+tax+sun;
+    document.getElementById('pSub').textContent=fmt(car.p)+' × '+days+' = '+fmt(net);
+    var dl=document.getElementById('pDiscLine');
+    if(disc>0){dl.style.display='';document.getElementById('pDisc').textContent='-'+fmt(Math.round(discAmt))+' ('+disc+'%)';}else{dl.style.display='none';}
     document.getElementById('pTax').textContent=fmt(Math.round(tax));
     document.getElementById('pSun').textContent=fmt(sun);
     document.getElementById('pTotal').textContent=fmt(Math.round(total));
     document.getElementById('pDep').textContent='Refundable security deposit: '+fmt(car.d)+' (held separately).';
   }
-  daysEl.oninput=calc; pickupEl.onchange=calc;
+  daysEl.oninput=calc; pickupEl.onchange=calc; document.getElementById('f_disc').oninput=calc;
+  var extraFiles=[];
+  (function(){var ei=document.querySelector('#dExtra input'), el=document.getElementById('extraList');
+    if(!ei)return;
+    ei.onchange=function(){ if(ei.files){for(var i=0;i<ei.files.length;i++)extraFiles.push(ei.files[i]);} ei.value='';
+      el.innerHTML=extraFiles.map(function(f){return '✓ '+f.name;}).join('<br>')+(extraFiles.length?('<br><a href="#" id="exClear" style="color:#c66">clear all</a>'):'');
+      var cl=document.getElementById('exClear'); if(cl)cl.onclick=function(e){e.preventDefault();e.stopPropagation();extraFiles=[];el.innerHTML='';}; };
+  })();
 
   Array.prototype.forEach.call(document.querySelectorAll('.drop input'),function(inp){
     inp.onchange=function(){
@@ -331,8 +353,11 @@
     if(!name||!email||!phone){alert('Please fill your name, email and phone.');return;}
     if(!days||days<1){alert('Please enter the number of days.');return;}
     if(!clientType){alert('Please select your client type (US or International).');return;}
+    var rep=document.getElementById('f_rep').value;
+    if(!rep){alert('Please select the Imperium rep.');return;}
     var car=FLEET[sel];
-    var sub=car.p*days, tax=sub*0.10, sun=10*days, total=sub+tax+sun;
+    var disc=parseFloat(document.getElementById('f_disc').value)||0; if(disc<0)disc=0; if(disc>100)disc=100;
+    var net=car.p*days, sub=net-net*disc/100, tax=sub*0.10, sun=10*days, total=sub+tax+sun;
     var docs=[];
     Array.prototype.forEach.call(document.querySelectorAll('.drop'),function(box){
       if(box.style.display==='none')return;
@@ -348,6 +373,7 @@
     fd.append('pickup_date',pickupEl.value||''); fd.append('return_date',returnEl.value||'');
     fd.append('subtotal',sub); fd.append('taxes_fees',Math.round(tax)); fd.append('sunpass',sun);
     fd.append('total',Math.round(total)); fd.append('deposit',car.d);
+    fd.append('discount_pct',disc); fd.append('rep',rep);
     fd.append('full_name',name); fd.append('nationality',document.getElementById('f_nat').value.trim());
     fd.append('email',email); fd.append('phone',phone);
     fd.append('address',document.getElementById('f_addr').value.trim());
@@ -370,6 +396,7 @@
       var key=fmap[inp.getAttribute('data-k')];
       if(key&&inp.files&&inp.files[0]) fd.append(key,inp.files[0]);
     });
+    for(var ei2=0; ei2<extraFiles.length; ei2++) fd.append('extra_docs', extraFiles[ei2]);
 
     fetch('https://mactclkjxhczmysjsakf.supabase.co/functions/v1/rental-request',{
       method:'POST',
