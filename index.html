@@ -140,7 +140,7 @@
       <div class="step"><div class="n">3</div><h2>Customer information</h2></div>
       <div class="row">
         <div class="field full"><label>Imperium rep <span class="req">*</span></label>
-          <select id="f_rep"><option value="">Select rep…</option><option>Cesar</option><option>Alejandro</option><option>Luis</option></select></div>
+          <select id="f_rep"><option value="">Select rep…</option><option>Cesar</option><option>Alejandro</option><option>Angelos</option><option>Luis</option></select></div>
       </div>
       <div class="row">
         <div class="field"><label>Full name <span class="req">*</span></label><input id="f_name" placeholder="As on your license"></div>
@@ -410,6 +410,19 @@
       alert('Something went wrong sending your request. Please try again.');
     });
   };
+</script>
+<script>
+// Opened from the Imperium System by a signed-in rep (?rep=Name): the rep is set and locked,
+// so every request they send is credited to them.
+(function(){
+  var m=(location.search||'').match(/[?&]rep=([^&]+)/); if(!m) return;
+  var rep=decodeURIComponent(m[1]).trim(); if(!rep) return;
+  var sel=document.getElementById('f_rep'); if(!sel) return;
+  var hit=null; Array.prototype.forEach.call(sel.options,function(o){ if(o.value&&o.value.toLowerCase()===rep.toLowerCase()) hit=o; });
+  if(!hit){ hit=document.createElement('option'); hit.textContent=rep.charAt(0).toUpperCase()+rep.slice(1); sel.appendChild(hit); }
+  sel.value=hit.value; sel.disabled=true; sel.title='Signed in as '+hit.value;
+  var b=document.getElementById('b_rep'); if(b){ b.value=hit.value; b.readOnly=true; }
+})();
 </script>
 </body>
 </html>
