@@ -413,6 +413,7 @@
     }).then(function(r){return r.json();}).then(function(res){
       if(!res||!res.ok) throw new Error((res&&res.error)||'Request failed');
       showDone(name,car,days,total,docs,clientType);
+      try{ if(window.parent!==window) window.parent.postMessage({type:'imp-request-sent'},'https://imperium-ops.pages.dev'); }catch(e){}
     }).catch(function(err){
       btn.disabled=false; btn.textContent='Submit request';
       var m=String((err&&err.message)||''); alert(/discount/i.test(m)?m:'Something went wrong sending your request. Please try again.');
