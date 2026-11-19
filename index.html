@@ -122,7 +122,7 @@
         <div class="field"><label>Return date</label><input type="date" id="returnd" readonly></div>
       </div>
       <div class="row">
-        <div class="field"><label>Discount on net (%)</label><input type="number" id="f_disc" min="0" max="100" step="0.1" value="0" placeholder="0"></div>
+        <div class="field"><label>Discount on net (%)</label><input type="number" id="f_disc" min="0" max="10" step="0.5" value="0" placeholder="0" disabled><div class="note" id="discHint" style="margin-top:6px">Up to 10%, for rentals of 2+ days on cars above $795/day.</div></div>
       </div>
       <div class="price" id="price">
         <div class="line">Daily rate × days <span class="v" id="pSub">—</span></div>
@@ -279,7 +279,7 @@
       return;
     }
     var car=FLEET[sel];
-    var disc=parseFloat(document.getElementById('f_disc').value)||0; if(disc<0)disc=0; if(disc>100)disc=100;
+    var disc=discFor(car,days);
     var net=car.p*days, discAmt=net*disc/100, sub=net-discAmt, tax=sub*0.10, sun=10*days, total=sub+tax+sun;
     document.getElementById('pSub').textContent=fmt(car.p)+' × '+days+' = '+fmt(net);
     var dl=document.getElementById('pDiscLine');
@@ -289,6 +289,14 @@
     document.getElementById('pTotal').textContent=fmt(Math.round(total));
     document.getElementById('pDep').textContent='Refundable security deposit: '+fmt(car.d)+' (held separately).';
   }
+  // Discount policy: at most 10% on net, only for 2+ days on cars above $795/day (also enforced by the server).
+  var DISC_MAX=10, DISC_MIN_DAYS=2, DISC_MIN_RATE=795;
+  function discFor(car,days){var el=document.getElementById('f_disc'),hint=document.getElementById('discHint');
+    var ok=!!car&&days>=DISC_MIN_DAYS&&car.p>DISC_MIN_RATE;
+    el.disabled=!ok; if(!ok&&el.value!=='0')el.value='0';
+    var d=parseFloat(el.value)||0; if(d<0)d=0; if(d>DISC_MAX){d=DISC_MAX;el.value=String(DISC_MAX);}
+    if(hint){hint.textContent=ok?'Up to 10% on net.':(!car?'Up to 10%, for rentals of 2+ days on cars above $795/day.':(car.p<=DISC_MIN_RATE?'No discount on cars at $795/day or less.':'Discount available from 2 days.'));}
+    return ok?d:0;}
   daysEl.oninput=calc; pickupEl.onchange=calc; document.getElementById('f_disc').oninput=calc;
   var extraFiles=[];
   (function(){var ei=document.querySelector('#dExtra input'), el=document.getElementById('extraList');
@@ -356,7 +364,7 @@
     var rep=document.getElementById('f_rep').value;
     if(!rep){alert('Please select the Imperium rep.');return;}
     var car=FLEET[sel];
-    var disc=parseFloat(document.getElementById('f_disc').value)||0; if(disc<0)disc=0; if(disc>100)disc=100;
+    var disc=discFor(car,days);
     var net=car.p*days, sub=net-net*disc/100, tax=sub*0.10, sun=10*days, total=sub+tax+sun;
     var docs=[];
     Array.prototype.forEach.call(document.querySelectorAll('.drop'),function(box){
@@ -398,16 +406,16 @@
     });
     for(var ei2=0; ei2<extraFiles.length; ei2++) fd.append('extra_docs', extraFiles[ei2]);
 
-    fetch('https://mactclkjxhczmysjsakf.supabase.co/functions/v1/rental-request',{
-      method:'POST',
-      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hY3RjbGtqeGhjem15c2pzYWtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3NDE4NzIsImV4cCI6MjEwMDMxNzg3Mn0.eldabq6dEf1WsCpAJ4qFgsApaeCl8N51deHesYfhpvw'},
-      body:fd
+    getRepToken().then(function(tok){
+      var h={'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hY3RjbGtqeGhjem15c2pzYWtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3NDE4NzIsImV4cCI6MjEwMDMxNzg3Mn0.eldabq6dEf1WsCpAJ4qFgsApaeCl8N51deHesYfhpvw'};
+      if(tok) h['Authorization']='Bearer '+tok;
+      return fetch('https://mactclkjxhczmysjsakf.supabase.co/functions/v1/rental-request',{method:'POST',headers:h,body:fd});
     }).then(function(r){return r.json();}).then(function(res){
       if(!res||!res.ok) throw new Error((res&&res.error)||'Request failed');
       showDone(name,car,days,total,docs,clientType);
     }).catch(function(err){
       btn.disabled=false; btn.textContent='Submit request';
-      alert('Something went wrong sending your request. Please try again.');
+      var m=String((err&&err.message)||''); alert(/discount/i.test(m)?m:'Something went wrong sending your request. Please try again.');
     });
   };
 </script>
@@ -423,6 +431,21 @@
   sel.value=hit.value; sel.disabled=true; sel.title='Signed in as '+hit.value;
   var b=document.getElementById('b_rep'); if(b){ b.value=hit.value; b.readOnly=true; }
 })();
+</script>
+<script>
+// Inside the Imperium System the signed-in rep's login is passed along, so each request is tagged
+// with the rep who sent it. Opened on its own, the form works as before (no login).
+function getRepToken(){
+  return new Promise(function(resolve){
+    if(window.parent===window){resolve(null);return;}
+    var done=false;
+    function on(e){ if(e.origin!=='https://imperium-ops.pages.dev')return; var d=e.data||{};
+      if(d.type!=='imp-token')return; done=true; window.removeEventListener('message',on); resolve(d.token||null); }
+    window.addEventListener('message',on);
+    try{ window.parent.postMessage({type:'imp-token-req'},'https://imperium-ops.pages.dev'); }catch(e){}
+    setTimeout(function(){ if(!done){ window.removeEventListener('message',on); resolve(null); } },2500);
+  });
+}
 </script>
 </body>
 </html>
