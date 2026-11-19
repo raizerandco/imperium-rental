@@ -52,7 +52,25 @@
     border:1px solid var(--panel-b);border-radius:11px;padding:11px 13px;width:100%}
   input:focus,select:focus{outline:none;border-color:var(--gold)}
   input::placeholder{color:#6f6a5e}
-  input[type="date"]{color-scheme:dark}
+  input[type="date"]{color-scheme:dark;-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;min-height:46px;line-height:1.3}
+  #discHint{font-size:11.5px;color:var(--muted);line-height:1.45}
+  input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
+  input[type="date"]::-webkit-calendar-picker-indicator{opacity:.75;cursor:pointer}
+  input,select{max-width:100%;min-width:0}
+  html,body{overflow-x:hidden}
+  @media (max-width:560px){
+    .wrap{padding:18px 14px 60px}
+    section{padding:16px;border-radius:16px}
+    .row{gap:12px}
+    .row + .row{margin-top:12px}
+    .field{flex:1 1 100%}
+    .cars{grid-template-columns:1fr 1fr;gap:8px}
+    .car{padding:11px}
+    .car .md{font-size:13.5px}
+    .up{grid-template-columns:1fr 1fr}
+    .price .total .a{font-size:21px}
+    input,select{font-size:16px}
+  }
   /* price box */
   .price{margin-top:16px;border-radius:16px;border:1px solid rgba(232,195,106,0.25);
     background:rgba(232,195,106,0.07);padding:16px}
@@ -105,11 +123,11 @@
 
   <div id="form">
     <h1 class="serif">Rental Request</h1>
-    <p class="lead">Select your vehicle, choose your dates, and share your details to reserve. Our team will review and confirm.</p>
+    <p class="lead">Select the vehicle, set the dates and enter the client's details. Imperium reviews each request before confirming the booking.</p>
 
     <!-- 1. vehicle -->
     <section>
-      <div class="step"><div class="n">1</div><h2>Choose your vehicle</h2></div>
+      <div class="step"><div class="n">1</div><h2>Vehicle</h2></div>
       <div class="cars" id="cars"></div>
     </section>
 
@@ -131,23 +149,23 @@
         <div class="line">SunPass ($10/day) <span class="v" id="pSun">—</span></div>
         <div class="total"><span class="l">Estimated total</span><span class="a" id="pTotal">—</span></div>
         <div class="note" id="pDep">Refundable security deposit held separately.</div>
-        <div class="note">Final price may include a discount applied by Imperium after review.</div>
+        <div class="note">Final price is confirmed by Imperium after review.</div>
       </div>
     </section>
 
     <!-- 3. info -->
     <section>
-      <div class="step"><div class="n">3</div><h2>Customer information</h2></div>
+      <div class="step"><div class="n">3</div><h2>Client information</h2></div>
       <div class="row">
         <div class="field full"><label>Imperium rep <span class="req">*</span></label>
           <select id="f_rep"><option value="">Select rep…</option><option>Cesar</option><option>Alejandro</option><option>Angelos</option><option>Luis</option></select></div>
       </div>
       <div class="row">
-        <div class="field"><label>Full name <span class="req">*</span></label><input id="f_name" placeholder="As on your license"></div>
+        <div class="field"><label>Full name <span class="req">*</span></label><input id="f_name" placeholder="As on the driver license"></div>
         <div class="field"><label>Nationality</label><input id="f_nat" placeholder="e.g. Brazilian"></div>
       </div>
       <div class="row">
-        <div class="field"><label>Email <span class="req">*</span></label><input id="f_email" type="email" placeholder="you@email.com"></div>
+        <div class="field"><label>Email <span class="req">*</span></label><input id="f_email" type="email" placeholder="client@email.com"></div>
         <div class="field"><label>Phone <span class="req">*</span></label><input id="f_phone" placeholder="+1 ..."></div>
       </div>
       <div class="row">
@@ -180,7 +198,7 @@
         <div class="field"><label>Broker phone</label><input id="b_phone" placeholder="+1 ..."></div>
       </div>
       <div class="row">
-        <div class="field full"><label>Imperium sales rep who connected you</label><input id="b_rep" placeholder="Name of the Imperium rep"></div>
+        <div class="field full"><label>Imperium sales rep on this referral</label><input id="b_rep" placeholder="Name of the Imperium rep"></div>
       </div>
     </section>
 
@@ -208,16 +226,16 @@
     </section>
 
     <button class="submit" id="submit">Submit request</button>
-    <div class="foot">Your documents are shared securely with Imperium Luxury for this reservation only.</div>
+    <div class="foot">Documents are stored securely and used only for this reservation.</div>
   </div>
 
   <!-- confirmation -->
   <div class="done" id="done">
     <div class="check">✓</div>
-    <h1 class="serif" style="margin-top:0">Request received</h1>
+    <h1 class="serif" style="margin-top:0">Request sent</h1>
     <p class="lead" id="doneMsg"></p>
     <section style="text-align:left" id="summary"></section>
-    <div class="foot">Imperium Luxury has received your request and will be in touch shortly.</div>
+    <div class="foot">Imperium will review this request and confirm the booking.</div>
   </div>
 
 </div>
@@ -340,7 +358,7 @@
   function showDone(name,car,days,total,docs,clientType){
     document.getElementById('form').style.display='none';
     document.getElementById('done').classList.add('show');
-    document.getElementById('doneMsg').textContent='Thank you, '+name+'. Imperium Luxury will review your request and confirm shortly.';
+    document.getElementById('doneMsg').textContent='Request for '+name+' sent to Imperium for review.';
     document.getElementById('summary').innerHTML=
       '<div class="step"><div class="n">i</div><h2>Summary</h2></div>'+
       '<p style="margin:0 0 6px"><strong>'+car.m+' '+car.mo+'</strong> · '+car.c+'</p>'+
@@ -358,9 +376,9 @@
     var email=document.getElementById('f_email').value.trim();
     var phone=document.getElementById('f_phone').value.trim();
     var days=parseInt(daysEl.value,10);
-    if(!name||!email||!phone){alert('Please fill your name, email and phone.');return;}
+    if(!name||!email||!phone){alert('Please fill in the client\'s name, email and phone.');return;}
     if(!days||days<1){alert('Please enter the number of days.');return;}
-    if(!clientType){alert('Please select your client type (US or International).');return;}
+    if(!clientType){alert('Please select the client type (US or International).');return;}
     var rep=document.getElementById('f_rep').value;
     if(!rep){alert('Please select the Imperium rep.');return;}
     var car=FLEET[sel];
@@ -416,7 +434,7 @@
       try{ if(window.parent!==window) window.parent.postMessage({type:'imp-request-sent'},'https://imperium-ops.pages.dev'); }catch(e){}
     }).catch(function(err){
       btn.disabled=false; btn.textContent='Submit request';
-      var m=String((err&&err.message)||''); alert(/discount/i.test(m)?m:'Something went wrong sending your request. Please try again.');
+      var m=String((err&&err.message)||''); alert(/discount/i.test(m)?m:'The request could not be sent. Please try again.');
     });
   };
 </script>
